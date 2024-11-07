@@ -2,100 +2,100 @@ import React, { useState } from 'react';
 import './App.css';
 
 function App() {
+  // State for the list of tasks
   const [tasks, setTasks] = useState([]);
-  const [taskDescription, setTaskDescription] = useState('');
-  const [taskCategory, setTaskCategory] = useState('');
-  const [editIndex, setEditIndex] = useState(null);
+  
+  // State for the task description input
+  const [description, setDescription] = useState('');
+  
+  // State to track the ID of the task being edited (if any)
+  const [editingId, setEditingId] = useState(null);
 
-  const addTask = () => {
-    if (taskDescription && taskCategory) {
-      const newTask = {
-        description: taskDescription,
-        category: taskCategory,
-        isCompleted: false,
-      };
-
-      if (editIndex !== null) {
-        const updatedTasks = [...tasks];
-        updatedTasks[editIndex] = newTask;
-        setTasks(updatedTasks);
-        setEditIndex(null);
-      } else {
-        setTasks([...tasks, newTask]);
+  // Function to add a new task or update an existing one
+  const addOrUpdateTask = (e) => {
+    e.preventDefault();
+    if (editingId) {
+      // Update an existing task
+      let updatedTask = [];
+      for(let task of tasks){
+        if(task.id === editingId){
+          task.description = description;
+        }
+        updatedTask.push(task);
       }
-
-      setTaskDescription('');
-      setTaskCategory('');
+      setTasks(updatedTask);
+      setEditingId(null);
+    } else {
+      // Add a new task with a unique ID and completed status
+      const newTask = {
+        id: Date.now(),
+        description: description,
+        completed: false
+      };
+      const newTasksArray = tasks.slice();
+      newTasksArray.push(newTask);
+      setTasks(newTasksArray);
     }
+    // Reset the input field after adding or updating
+    setDescription('');
   };
 
-  const deleteTask = (index) => {
-    setTasks(tasks.filter((_, i) => i !== index));
+  // Function to delete a task by filtering it out
+  const deleteTask = (id) => {
+    let remainingTasks = [];
+    for(let task of tasks){
+      if(task.id != id) remainingTasks.push(task);
+    }
+    setTasks(remainingTasks);
   };
 
-  const markTaskComplete = (index) => {
-    const updatedTasks = [...tasks];
-    updatedTasks[index].isCompleted = !updatedTasks[index].isCompleted;
-    setTasks(updatedTasks);
+  // Function to toggle the completion status of a task
+  const toggleComplete = (id) => {
+    let toggledTasks=[];
+    for(let task of tasks){
+      if(task.id===id)
+      {
+        task.completed=!task.completed;
+      }
+      toggledTasks.push(task);
+    }
+    setTasks(toggledTasks);
   };
 
-  const editTask = (index) => {
-    setTaskDescription(tasks[index].description);
-    setTaskCategory(tasks[index].category);
-    setEditIndex(index);
+  // Function to start editing a task, pre-filling the input with the task description
+  const startEditing = (task) => {
+    setEditingId(task.id);
+    setDescription(task.description);
   };
-
-  const completedTasksCount = tasks.filter((task) => task.isCompleted).length;
 
   return (
-    <div className="App">
-      <h1>To Do List</h1>
-
-      <div className="task-form">
-        <input
-          type="text"
-          placeholder="Task Description"
-          value={taskDescription}
-          onChange={(e) => setTaskDescription(e.target.value)}
+    <div className="container">
+      <h1>Todo List</h1>
+      <form onSubmit={addOrUpdateTask}>
+        <input 
+          type="text" 
+          placeholder="Task Description" 
+          value={description} 
+          onChange={(e) => setDescription(e.target.value)} 
+          required 
         />
-        <input
-          type="text"
-          placeholder="Category"
-          value={taskCategory}
-          onChange={(e) => setTaskCategory(e.target.value)}
-        />
-        <button onClick={addTask}>{editIndex !== null ? 'Update Task' : 'Add Task'}</button>
-      </div>
-
-      <div className="tasks">
-        {tasks.map((task, index) => (
-          <div key={index} className="task">
-            <div
-              className="task-details"
-              style={{
-                textDecoration: task.isCompleted ? 'line-through' : 'none',
-                color: task.isCompleted ? 'red' : 'black',
-              }}
-            >
-              <h3>{task.description}</h3>
-              <p>Category: {task.category}</p>
-            </div>
-            <div className="task-actions">
-              <input
-                type="checkbox"
-                checked={task.isCompleted}
-                onChange={() => markTaskComplete(index)}
-              />
-              <button onClick={() => editTask(index)}>Edit</button>
-              <button onClick={() => deleteTask(index)}>Delete</button>
-            </div>
-          </div>
+        <button type="submit">{editingId ? 'Update Task' : 'Add Task'}</button>
+      </form>
+      
+      <ul>
+        {tasks.map(task => (
+          <li key={task.id} className={`task ${task.completed ? 'completed' : ''}`}>
+            <input 
+              type="checkbox" 
+              checked={task.completed} 
+              onChange={() => toggleComplete(task.id)} 
+            />
+            <span>{task.description}</span>
+            <button onClick={() => startEditing(task)} className="edit-button">Edit</button>
+            <button onClick={() => deleteTask(task.id)} className="delete-button">Delete</button>
+          </li>
         ))}
-      </div>
-
-      <div className="task-count">
-        <h3>Total Completed Tasks: {completedTasksCount}</h3>
-      </div>
+      </ul>
     </div>
   );
 }
